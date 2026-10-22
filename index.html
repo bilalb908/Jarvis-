@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<title>JARVIS — Personal Assistant</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{color-scheme:dark;--bg:#07111f;--panel:#0d1b2b;--line:#1b3b54;--cyan:#58d9ff;--text:#e8f7ff;--muted:#91a9ba;--green:#7af0c5}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#102b42 0,#07111f 48%);color:var(--text);font:16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+main{max-width:720px;margin:auto;padding:22px 16px 42px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{letter-spacing:.22em;color:var(--cyan);font-size:12px;font-weight:800}.status{font-size:12px;color:var(--green);border:1px solid #245d59;border-radius:999px;padding:7px 10px}
+h1{font-size:32px;margin:18px 0 4px;letter-spacing:.04em}.sub{color:var(--muted);margin:0 0 22px}
+.panel{background:linear-gradient(145deg,rgba(13,27,43,.96),rgba(7,17,31,.96));border:1px solid var(--line);border-radius:20px;padding:18px;margin:14px 0;box-shadow:0 12px 35px #0002}
+h2{font-size:17px;margin:0 0 12px}.orb-wrap{display:flex;justify-content:center;padding:12px 0 18px}
+.orb{width:112px;height:112px;border-radius:50%;border:1px solid #58d9ff88;background:radial-gradient(circle at 35% 30%,#a4f4ff,#1c8dbb 26%,#0a2740 58%,#07111f 72%);box-shadow:0 0 22px #35caff55,inset 0 0 20px #8cecff44;display:grid;place-items:center;color:#e9fcff;font-size:12px;letter-spacing:.15em}
+.orb.listening{animation:pulse 1s infinite alternate}@keyframes pulse{to{box-shadow:0 0 40px #35caffbb,inset 0 0 28px #8cecff88;transform:scale(1.035)}}
+button,input,textarea,select{font:inherit}button{border:1px solid #2c637d;border-radius:12px;background:#102b40;color:var(--text);padding:12px 14px;cursor:pointer}button.primary{background:linear-gradient(90deg,#147da7,#1d9bc1);border-color:#62dcff;color:#fff;font-weight:750}button:active{transform:scale(.99)}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{flex:1;min-width:135px}
+label{display:block;color:var(--muted);font-size:13px;margin:12px 0 6px}input,textarea,select{width:100%;background:#061321;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px}textarea{min-height:76px;resize:vertical}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}.item{border:1px solid var(--line);border-radius:12px;padding:11px;margin:8px 0;display:flex;gap:10px;align-items:flex-start}.item .body{flex:1;min-width:0;overflow-wrap:anywhere}.small{font-size:12px;color:var(--muted)}.reply{white-space:pre-wrap;line-height:1.5;color:#d5f3ff}.empty{color:var(--muted);font-size:14px}.foot{font-size:12px;color:var(--muted);line-height:1.5;text-align:center;margin:22px 4px}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><div class="brand">PERSONAL AI SYSTEM</div><div class="status" id="status">● READY</div></div>
+  <h1>J.A.R.V.I.S.</h1><p class="sub">Your voice-first personal assistant</p>
+
+  <section class="panel">
+    <div class="orb-wrap"><div class="orb" id="orb">JARVIS</div></div>
+    <div class="actions">
+      <button class="primary" id="talkBtn">🎙 Talk to JARVIS</button>
+      <button id="stopBtn">■ Stop speaking</button>
+    </div>
+    <label for="message">Or type a message</label>
+    <div class="row"><input id="message" placeholder="Say or type something…"><button id="sendBtn">Send</button></div>
+    <label>JARVIS response</label><div class="reply" id="reply">Systems online. Hello. I can remember notes and manage reminders on this device.</div>
+    <p class="small">Voice recognition depends on your browser and internet connection. This starter version is not a full general-purpose AI yet.</p>
+  </section>
+
+  <section class="panel">
+    <h2>🧠 Personal memory</h2>
+    <p class="small">Save notes you want JARVIS to remember. Stored in this browser on this device.</p>
+    <label for="memoryText">Memory / important detail</label>
+    <textarea id="memoryText" placeholder="Example: My exam is on Friday."></textarea>
+    <div class="actions" style="margin-top:9px"><button class="primary" id="saveMemory">Save memory</button><button id="clearMemory">Clear all</button></div>
+    <div id="memoryList"></div>
+  </section>
+
+  <section class="panel">
+    <h2>⏰ Reminders</h2>
+    <p class="small">Add a reminder with a date and time. Keep this page open for the most reliable alerts in this prototype.</p>
+    <label for="reminderText">What should I remind you about?</label>
+    <input id="reminderText" placeholder="Example: Revise Laws of Motion">
+    <label for="reminderWhen">Date and time</label>
+    <input id="reminderWhen" type="datetime-local">
+    <div class="actions" style="margin-top:10px"><button class="primary" id="addReminder">Add reminder</button><button id="enableNotifications">Enable notifications</button></div>
+    <div id="reminderList"></div>
+  </section>
+  <p class="foot">JARVIS Starter · Your notes stay in this browser. Do not store passwords or sensitive information. This prototype does not continuously listen for a wake word, and reminders may be delayed if Android suspends the browser.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, fallback){try{return JSON.parse(localStorage.getItem(k)) ?? fallback}catch{return fallback}},
+  set(k,v){localStorage.setItem(k,JSON.stringify(v))}
+};
+let memories = store.get('jarvis_memories',[]);
+let reminders = store.get('jarvis_reminders',[]);
+let recognition = null;
+let notifyPermission = ('Notification' in window) ? Notification.permission : 'unsupported';
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let voices = [];
+function refreshVoices(){ voices = speechSynthesis.getVoices(); }
+if ('speechSynthesis' in window){ refreshVoices(); speechSynthesis.onvoiceschanged = refreshVoices; }
+function setStatus(s){$('status').textContent='● '+s.toUpperCase()}
+function speak(text){
+  if(!('speechSynthesis' in window)){setStatus('SPEECH UNAVAILABLE');return}
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang='en-IN'; utter.rate=0.96; utter.pitch=0.88;
+  const preferred = voices.find(v=>/en-IN/i.test(v.lang) && /male|david|mark|daniel|rishi/i.test(v.name))
+    || voices.find(v=>/en-IN/i.test(v.lang)) || voices.find(v=>/en-US|en-GB/i.test(v.lang));
+  if(preferred) utter.voice=preferred;
+  utter.onstart=()=>setStatus('SPEAKING'); utter.onend=()=>setStatus('READY');
+  speechSynthesis.speak(utter);
+}
+function respond(input){
+  const q=input.trim(); if(!q)return;
+  const low=q.toLowerCase();
+  let answer='';
+  if(/\b(hello|hi|hey)\b/.test(low)) answer='Hello. JARVIS is online. What would you like to get done?';
+  else if(low.includes('what do you remember') || low.includes('show memory')) answer=memories.length ? 'Here is what I have saved: '+memories.map(m=>m.text).join('. ') : 'I do not have any saved memories yet.';
+  else if(low.includes('reminder')) answer=reminders.length ? 'You have '+reminders.filter(r=>!r.done).length+' upcoming or unfinished reminders. Check the reminders panel for details.' : 'You have no reminders saved yet. Add one in the reminders panel.';
+  else if(low.startsWith('remember ')){const text=q.slice(9).trim();if(text){memories.unshift({id:Date.now(),text,created:Date.now()});store.set('jarvis_memories',memories);renderMemories();answer='Saved to your personal memory: '+text;}else answer='Tell me what you want me to remember.';}
+  else if(low.includes('time')) answer='The current device time is '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'.';
+  else answer='I heard you say: '+q+'. I can save a memory if you say “remember” followed by the detail, or you can add a reminder in the reminders panel. My full AI conversation engine is not connected yet.';
+  $('reply').textContent=answer; speak(answer);
+}
+function startListening(){
+  if(!SpeechRecognition){$('reply').textContent='Speech recognition is not available in this browser. Try opening JARVIS in Chrome and use the text box.';setStatus('VOICE NOT SUPPORTED');return}
+  try{
+    recognition=new SpeechRecognition(); recognition.lang='en-IN'; recognition.interimResults=false; recognition.maxAlternatives=1;
+    recognition.onstart=()=>{$('orb').classList.add('listening');setStatus('LISTENING')};
+    recognition.onresult=e=>{const text=e.results[0][0].transcript;$('message').value=text;respond(text)};
+    recognition.onerror=e=>{setStatus('VOICE ERROR');$('reply').textContent='Voice input error: '+e.error+'. You can still type a message.'};
+    recognition.onend=()=>{$('orb').classList.remove('listening');if($('status').textContent.includes('LISTENING'))setStatus('READY')};
+    recognition.start();
+  }catch(e){$('reply').textContent='Could not start voice recognition. Try again or type instead.'}
+}
+function renderMemories(){
+  $('memoryList').innerHTML='';
+  if(!memories.length){$('memoryList').innerHTML='<p class="empty">No saved memories yet.</p>';return}
+  memories.forEach(m=>{
+    const div=document.createElement('div');div.className='item';
+    const body=document.createElement('div');body.className='body';body.textContent=m.text;
+    const del=document.createElement('button');del.textContent='Delete';del.setAttribute('aria-label','Delete memory');
+    del.onclick=()=>{memories=memories.filter(x=>x.id!==m.id);store.set('jarvis_memories',memories);renderMemories()};
+    div.append(body,del);$('memoryList').append(div);
+  });
+}
+function renderReminders(){
+  $('reminderList').innerHTML='';
+  reminders.sort((a,b)=>a.when-b.when);
+  if(!reminders.length){$('reminderList').innerHTML='<p class="empty">No reminders yet.</p>';return}
+  reminders.forEach(r=>{
+    const div=document.createElement('div');div.className='item';
+    const body=document.createElement('div');body.className='body';
+    const title=document.createElement('div');title.textContent=(r.done?'✓ ':'')+r.text;
+    const when=document.createElement('div');when.className='small';when.textContent=new Date(r.when).toLocaleString();
+    body.append(title,when);
+    const actions=document.createElement('div');
+    if(!r.done){const done=document.createElement('button');done.textContent='Done';done.onclick=()=>{r.done=true;store.set('jarvis_reminders',reminders);renderReminders()};actions.append(done)}
+    const del=document.createElement('button');del.textContent='×';del.setAttribute('aria-label','Delete reminder');del.onclick=()=>{reminders=reminders.filter(x=>x.id!==r.id);store.set('jarvis_reminders',reminders);renderReminders()};actions.append(del);
+    div.append(body,actions);$('reminderList').append(div);
+  });
+}
+function checkReminders(){
+  const now=Date.now();
+  reminders.forEach(r=>{
+    if(!r.done && !r.alerted && r.when<=now){
+      r.alerted=true;store.set('jarvis_reminders',reminders);
+      const msg='Reminder: '+r.text;
+      $('reply').textContent=msg;speak(msg);
+      if('Notification' in window && Notification.permission==='granted'){try{new Notification('JARVIS Reminder',{body:r.text})}catch{}}
+      renderReminders();
+    }
+  });
+}
+$('talkBtn').onclick=startListening;
+$('stopBtn').onclick=()=>{if('speechSynthesis'in window)speechSynthesis.cancel();if(recognition)recognition.stop();setStatus('READY')};
+$('sendBtn').onclick=()=>{respond($('message').value);$('message').value=''};
+$('message').addEventListener('keydown',e=>{if(e.key==='Enter')$('sendBtn').click()});
+$('saveMemory').onclick=()=>{const text=$('memoryText').value.trim();if(!text)return;memories.unshift({id:Date.now(),text,created:Date.now()});store.set('jarvis_memories',memories);$('memoryText').value='';renderMemories();$('reply').textContent='Memory saved.';speak('Memory saved.');};
+$('clearMemory').onclick=()=>{if(confirm('Delete every saved memory from this browser?')){memories=[];store.set('jarvis_memories',memories);renderMemories()}};
+$('addReminder').onclick=()=>{const text=$('reminderText').value.trim();const when=new Date($('reminderWhen').value).getTime();if(!text||!$('reminderWhen').value||!Number.isFinite(when)){alert('Enter a reminder and a valid date and time.');return}if(when<=Date.now()){alert('Choose a future time.');return}reminders.push({id:Date.now(),text,when,done:false,alerted:false});store.set('jarvis_reminders',reminders);$('reminderText').value='';$('reminderWhen').value='';renderReminders();$('reply').textContent='Reminder added. Keep this page open for alerts.';speak('Reminder added.');};
+$('enableNotifications').onclick=async()=>{if(!('Notification' in window)){alert('Notifications are not supported here.');return}const p=await Notification.requestPermission();alert(p==='granted'?'Notifications enabled.':'Notifications were not enabled.');};
+renderMemories();renderReminders();setInterval(checkReminders,15000);
+if('serviceWorker'in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
