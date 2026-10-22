@@ -8,12 +8,14 @@
   "background_color": "#07111f",
   "theme_color": "#07111f",
   "description": "A voice-first personal assistant.",
-  "icons": [
-    {
-      "src": "./icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ]
+  
+"icons": [
+  {
+    "src": "/Jarvis/file_00000000fc5081f4a0eedd64fa1ba05a.png",
+    "sizes": "any",
+    "type": "image/png",
+    "purpose": "any"
+  }
+]
+
 }
