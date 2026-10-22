@@ -79,8 +79,12 @@ function speak(text){
   if(!('speechSynthesis' in window)){setStatus('SPEECH UNAVAILABLE');return}
   speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang='en-IN'; utter.rate=0.96; utter.pitch=0.88;
-  const preferred = voices.find(v=>/en-IN/i.test(v.lang) && /male|david|mark|daniel|rishi/i.test(v.name))
+  utter.lang='en-GB';
+utter.rate=0.88;
+utter.pitch=0.72;
+const preferred = voices.find(v=>/en-GB.*(male|david|daniel|george)/i.test(v.name))
+  || voices.find(v=>/en-GB/i.test(v.lang))
+  || voices.find(v=>/en-US/i.test(v.lang));
     || voices.find(v=>/en-IN/i.test(v.lang)) || voices.find(v=>/en-US|en-GB/i.test(v.lang));
   if(preferred) utter.voice=preferred;
   utter.onstart=()=>setStatus('SPEAKING'); utter.onend=()=>setStatus('READY');
