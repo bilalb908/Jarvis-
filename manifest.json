@@ -1,4 +1,3 @@
-
 {
   "name": "JARVIS Personal Assistant",
   "short_name": "JARVIS",
@@ -7,15 +6,13 @@
   "display": "standalone",
   "background_color": "#07111f",
   "theme_color": "#07111f",
-  "description": "A voice-first personal assistant.",
-  
-"icons": [
-  {
-    "src": "/Jarvis/file_00000000fc5081f4a0eedd64fa1ba05a.png",
-    "sizes": "any",
-    "type": "image/png",
-    "purpose": "any"
-  }
-]
-
+  "description": "My AI assistant",
+  "icons": [
+    {
+      "src": "./file_00000000fc5081f4a0eedd64fa1ba05a.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
